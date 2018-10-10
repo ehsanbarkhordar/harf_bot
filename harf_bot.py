@@ -56,20 +56,32 @@ def is_admin(user_id):
     return False
 
 
+main_menu = [TemplateMessageButton(text=TMessage.inbox, value=TMessage.inbox, action=0),
+             TemplateMessageButton(text=TMessage.get_my_link, value=TMessage.get_my_link, action=0),
+             TemplateMessageButton(text=TMessage.send_direct, value=TMessage.send_direct, action=0),
+             TemplateMessageButton(text=TMessage.help, value=TMessage.help, action=0)]
+
+
 # =================================== Start Conversation ===========================================
 @dispatcher.message_handler(filters=[DefaultFilter()])
 def start_conversation(bot, update):
     user_peer = update.get_effective_user()
-    text_message = TextMessage(ReadyMessage.initiate)
-    kwargs = {"message": text_message, "update": update, "bot": bot, "try_times": 1}
-    bot.send_message(text_message, user_peer, success_callback=success_send_message,
+    general_message = TextMessage(ReadyMessage.initiate)
+    template_message = TemplateMessage(general_message=general_message, btn_list=main_menu)
+    kwargs = {"message": template_message, "update": update, "bot": bot, "try_times": 1}
+    bot.send_message(template_message, user_peer, success_callback=success_send_message,
                      failure_callback=success_send_message, kwargs=kwargs)
-    dispatcher.register_conversation_next_step_handler(
-        update, common_handlers + [
-            MessageHandler(TemplateResponseFilter(keywords=TMessage.show_statements), request_permission)])
+    dispatcher.finish_conversation(update)
 
 
-# =================================== help =======================================================
+# =================================== Create new link =======================================================
+@dispatcher.message_handler(filters=[TemplateResponseFilter(keywords=[TMessage.get_my_link])])
+def create_new_link(bot, update):
+    user_peer = update.get_effective_user()
+
+
+
+# =================================== Help =======================================================
 @dispatcher.message_handler(filters=[TemplateResponseFilter(keywords=[TMessage.help]), TextFilter(keywords="help")])
 def help_me(bot, update):
     user_peer = update.get_effective_user()
